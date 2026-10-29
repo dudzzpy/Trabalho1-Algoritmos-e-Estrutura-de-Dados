@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <errno.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 #include "tabela.h"
 
 #define N_INICIAL 1234
@@ -50,10 +54,23 @@ static void verificar_ordenacao(TabelaProdutos *t)
 
 int main(void)
 {
-    const char *dir = "/tmp/teste_produtos";
-    char cmd[128], caminho[300];
-    snprintf(cmd, sizeof cmd, "rm -rf %s && mkdir -p %s", dir, dir);
-    if (system(cmd) != 0) return 1;
+    const char *dir = "teste_dados_produtos";
+    char caminho[300];
+
+    /* Usa uma pasta relativa e evita comandos de shell dependentes do SO. */
+    #ifdef _WIN32
+    if (_mkdir(dir) != 0 && errno != EEXIST) return 1;
+    #else
+    if (mkdir(dir, 0775) != 0 && errno != EEXIST) return 1;
+    #endif
+
+    const char *nomes[] = { 
+        "produtos.bin", "produtos.idx", "produtos.ovf" 
+    };
+    for (size_t i = 0; i < sizeof nomes / sizeof nomes[0]; ++i) {
+        snprintf(caminho, sizeof caminho, "%s/%s", dir, nomes[i]);
+        remove(caminho);
+}
 
     /* arquivo inicial: ids 10*i+5, com lacunas */
     snprintf(caminho, sizeof caminho, "%s/produtos.bin", dir);
