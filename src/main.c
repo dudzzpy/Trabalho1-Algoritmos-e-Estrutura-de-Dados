@@ -107,9 +107,16 @@ int main(int argc, char *argv[])
     informacoes(&t);
 
     for (;;) {
-        printf("\n1) Mostrar registros  2) Busca binaria  3) Busca por indice  4) Comparar metodos\n"
-               "5) Inserir  6) Remover  7) Reorganizar+reconstruir indice  8) Mostrar overflow\n"
-               "9) Informacoes  0) Sair\n> ");
+        printf("\n1) Mostrar registros\n"
+               "2) Busca binaria\n"
+               "3) Busca por indice\n"
+               "4) Comparar metodos\n"
+               "5) Inserir\n"
+               "6) Remover\n"
+               "7) Reorganizar+reconstruir indice\n"
+               "8) Mostrar overflow\n"
+               "9) Informacoes\n"
+               "0) Sair\n> ");
         fflush(stdout);
         char op[16];
         if (!fgets(op, sizeof op, stdin)) break;
