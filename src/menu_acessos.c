@@ -8,7 +8,13 @@
 static void ler_texto(const char *titulo, char *dest, size_t cap) {
     printf("%s", titulo);
     if (!fgets(dest, (int)cap, stdin)) { dest[0] = '\0'; return; }
-    dest[strcspn(dest, "\r\n")] = '\0';
+    size_t len = strcspn(dest, "\r\n");
+    if (dest[len] != '\0') {
+        dest[len] = '\0';
+    } else {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF) { }
+    }
 }
 static int64_t pedir_id(const char *prompt) {
     char s[64], *fim;
@@ -17,7 +23,7 @@ static int64_t pedir_id(const char *prompt) {
     if (!*s || *fim || n <= 0 || n > AC_ID_MAX) return -1;
     return n;
 }
-/* Consulta 2: contagem de compras do produto informado (varredura com 1 registro em RAM). */
+/* consulta adicional como teste: contagem de compras do produto informado (varredura com 1 registro em RAM). */
 static void contar_compras(TabelaAcessos *t) {
     int64_t id = pedir_id("ID do produto: ");
     if (id < 0) { puts("ID invalido."); return; }
@@ -29,7 +35,7 @@ static void contar_compras(TabelaAcessos *t) {
     }
     printf("Total de compras do produto %" PRId64 ": %" PRId64 "\n", id, compras);
 }
-/* Consulta 3: evento mais frequente, sem carregar todos os acessos. */
+/*  consulta adicional como teste: evento mais frequente, sem carregar todos os acessos. */
 static void evento_mais_frequente(TabelaAcessos *t) {
     const char *tipos[] = {"view", "cart", "purchase", "remove_from_cart", "outros"};
     int64_t cont[5] = {0};
