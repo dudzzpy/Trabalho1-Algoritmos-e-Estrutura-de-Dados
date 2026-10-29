@@ -33,3 +33,32 @@ com entradas de 16 bytes `(chave int64, posicao int64)`.
 - Reorganizacao: com overflow cheio, por comando, ou ao sair com overflow nao vazio -> merge
   em streaming (principal sem removidos + overflow ordenado) em arquivo temporario, troca do
   arquivo e reconstrucao/gravacao do indice.
+
+## Perguntas de pesquisa
+
+Para o desenvolvimento do trabalho, foram definidas três perguntas a serem respondidas utilizando os arquivos de dados do e-commerce:
+
+**1. Qual é a marca, categoria e preço de um produto a partir de seu identificador?**
+
+A consulta utiliza o arquivo `produtos.bin` para localizar o produto e apresentar suas informações. Pode ser executada pelo programa `produtos`, utilizando a pesquisa binária ou o índice parcial.
+
+**2. Quais são os dados de um evento específico realizado no e-commerce?**
+
+A consulta utiliza o arquivo `acessos.bin` para localizar um evento pelo seu identificador e apresentar sua data, tipo, produto, usuário e sessão. O programa permite realizar essa pesquisa diretamente no arquivo ou utilizando o índice parcial.
+
+**3. Como localizar um produto pelo identificador utilizando o índice parcial, sem percorrer o arquivo inteiro?**
+
+A consulta utiliza o índice parcial de produtos para identificar a região do arquivo onde o registro está armazenado. Em seguida, realiza a pesquisa no bloco correspondente, reduzindo a quantidade de registros examinados.
+
+## Validação com dados reais
+
+Para validar a implementação, foi utilizada uma amostra de 100.000 eventos do dataset *eCommerce behavior data from multi category store*, disponibilizado no Kaggle.
+
+A partir dessa amostra, foram gerados:
+
+- 20.675 registros distintos de produtos;
+- 100.000 registros de acessos;
+- Um índice parcial para produtos;
+- Um índice parcial para acessos.
+
+As três consultas foram executadas com sucesso utilizando os dados gerados.
