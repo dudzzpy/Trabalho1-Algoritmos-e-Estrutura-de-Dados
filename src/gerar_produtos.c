@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "produto.h"
+#include "indice.h"
 
 #define NUM_CAMPOS 9
 #define TAM_LINHA  2048
@@ -82,16 +83,66 @@ static int cmp_por_id(const void *a, const void *b)
     return (x > y) - (x < y);
 }
 
-/* Divide a linha em campos (vazios preservados). Retorna a quantidade de campos. */
+/*
+ * Divide uma linha CSV, preservando campos vazios e respeitando aspas.
+ * Virgulas dentro de aspas nao separam campos e aspas duplicadas ("") viram ".
+ * Retorna a quantidade de campos ou -1 se o CSV estiver malformado/exceder max.
+ * A funcao altera a linha recebida e nao suporta campos com quebras de linha.
+ */
 static int dividir_csv(char *linha, char *campos[], int max)
 {
+    char *leitura = linha;
+    char *escrita = linha;
     int n = 0;
-    campos[n++] = linha;
-    for (char *p = linha; *p && n < max; p++)
-        if (*p == ',') { *p = '\0'; campos[n++] = p + 1; }
-    char *fim = campos[n - 1] + strlen(campos[n - 1]);
-    while (fim > campos[n - 1] && (fim[-1] == '\n' || fim[-1] == '\r')) *--fim = '\0';
-    return n;
+
+    if (max <= 0) return -1;
+
+    while (1) {
+        if (n >= max) return -1;
+        campos[n++] = escrita;
+
+        if (*leitura == '"') {
+            /* Campo entre aspas: remove as aspas e desescapa "". */
+            leitura++;
+            int fechou = 0;
+            while (*leitura) {
+                if (*leitura == '"') {
+                    if (leitura[1] == '"') {
+                        *escrita++ = '"';
+                        leitura += 2;
+                    } else {
+                        leitura++;
+                        fechou = 1;
+                        break;
+                    }
+                } else {
+                    *escrita++ = *leitura++;
+                }
+            }
+            if (!fechou) return -1;
+
+            /* Aceita espacos depois da aspa de fechamento. */
+            while (*leitura == ' ' || *leitura == '\t') leitura++;
+            if (*leitura != ',' && *leitura != '\0' &&
+                *leitura != '\n' && *leitura != '\r') return -1;
+        } else {
+            /* Campo sem aspas: virgula encerra o campo. */
+            while (*leitura && *leitura != ',' && *leitura != '\n' && *leitura != '\r') {
+                if (*leitura == '"') return -1; /* aspa no meio de campo nao citado */
+                *escrita++ = *leitura++;
+            }
+        }
+
+        char delimitador = *leitura;
+        if (delimitador == '\r' && leitura[1] == '\n') leitura += 2;
+        else if (delimitador == ',' || delimitador == '\r' || delimitador == '\n') leitura++;
+        else if (delimitador != '\0') return -1;
+
+        *escrita++ = '\0';
+
+        if (delimitador != ',') return n;
+        /* A proxima iteracao tambem trata campos vazios, inclusive o ultimo. */
+    }
 }
 
 int main(int argc, char *argv[])
@@ -137,11 +188,19 @@ int main(int argc, char *argv[])
     if (!out) { perror(caminho); return 1; }
     for (size_t i = 0; i < col.n; i++)
         if (produto_gravar_seq(out, &col.itens[i]) != 0) { perror("gravar"); return 1; }
-    fclose(out);
+    if (fclose(out) != 0) { perror("fechar produtos.bin"); return 1; }
+
+    char caminho_idx[1024];
+    snprintf(caminho_idx, sizeof caminho_idx, "%s/produtos.idx", argv[1]);
+    if (indice_construir(caminho, caminho_idx) != 0) {
+        perror("construir produtos.idx");
+        return 1;
+    }
 
     printf("Linhas lidas: %lld | ignoradas: %lld | campos truncados: %lld\n", lidas, ignoradas, truncados);
     printf("%s: %zu produtos distintos x %d bytes = %zu bytes\n",
            caminho, col.n, TAM_REGISTRO, col.n * TAM_REGISTRO);
+    printf("Indice gerado: %s\n", caminho_idx);
     free(col.itens);
     free(col.tabela);
     return 0;
