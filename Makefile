@@ -22,8 +22,8 @@ data:
 produtos: src/main.c $(COMUM) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ src/main.c $(COMUM)
 
-gerar_produtos: src/gerar_produtos.c src/produto.c $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ src/gerar_produtos.c src/produto.c
+gerar_produtos: src/gerar_produtos.c src/produto.c src/indice.c $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ src/gerar_produtos.c src/produto.c src/indice.c
 
 # Intervalos pequenos exercitam os 2 niveis do indice e a reorganizacao.
 teste_produtos: tests/teste_produtos.c $(COMUM) $(HEADERS)
